@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.linalg import sqrtm
+from scipy.linalg import sqrtm, polar
 from ncon import ncon
 from scipy.sparse.linalg import LinearOperator, eigs
 
@@ -162,8 +162,8 @@ def rightCanonical(A: np.ndarray, tol=1e-14):
     return A_R, sqrt_r, lam
 
 def mixedCanonical(A, tol=1e-14):
-    _, sqrt_l, lam = leftCanonical(A)
-    _, sqrt_r, _ = rightCanonical(A)
+    _, sqrt_l, lam = leftCanonical(A, tol=tol)
+    _, sqrt_r, _ = rightCanonical(A, tol=tol)
 
     A_C = ncon(
         [sqrt_l, A, sqrt_r],
@@ -177,14 +177,10 @@ def mixedCanonical(A, tol=1e-14):
     A_C = A_C / np.sqrt(lam)
 
     C = sqrt_l @ sqrt_r
-    C = C / np.trace(C.conj().T @ C)
-    A_C = A_C / np.trace(C.conj().T @ C)
 
     return A_C, C
 
-def hamiltonianHAC(mpoTensor, mpsLeft, mpsRight):
-    leftenv, _ = leftEnvironment(mpoTensor=mpoTensor, mpsLeft=mpsLeft)
-    rightenv, _ = rightEnvironment(mpoTensor=mpoTensor, mpsRight=mpsRight)
+def hamiltonianHAC(mpoTensor, leftenv, rightenv):
     HAC = ncon(
         [leftenv, mpoTensor, rightenv],
         [
@@ -194,11 +190,9 @@ def hamiltonianHAC(mpoTensor, mpsLeft, mpsRight):
         ]
     )
 
-    return HAC
+    return HAC 
 
-def hamiltonianHC(mpoTensor, mpsLeft, mpsRight):
-    leftenv, _ = leftEnvironment(mpoTensor=mpoTensor, mpsLeft=mpsLeft)
-    rightenv, _ = rightEnvironment(mpoTensor=mpoTensor, mpsRight=mpsRight)
+def hamiltonianHC(leftenv, rightenv):
     HC = ncon(
         [leftenv, rightenv],
         [
@@ -210,6 +204,7 @@ def hamiltonianHC(mpoTensor, mpsLeft, mpsRight):
     return HC
 
 def updateAC(hamiltonianHAC, tol=1e-14):
+    chi, d = hamiltonianHAC.shape[:2]
     def matvec(v):
         v = v.reshape(chi, d, chi)
         result = ncon(
@@ -237,6 +232,7 @@ def updateAC(hamiltonianHAC, tol=1e-14):
     return eigenvector[:, 0].reshape(chi, d, chi), eigenvalues[0]
     
 def updateC(hamiltonianHC, tol=1e-14):
+    chi = hamiltonianHC.shape[0]
     def matvec(v):
         v = v.reshape(chi, chi)
         result = ncon(
@@ -261,8 +257,22 @@ def updateC(hamiltonianHC, tol=1e-14):
         tol=tol
     )
 
-    return eigenvector[:, 0].reshape(chi, d, chi), eigenvalues[0]
+    return eigenvector[:, 0].reshape(chi, chi), eigenvalues[0]
 
+def recoverMixedCanonical(AC, C):
+    chi, d = AC.shape[: 2]
+    U_AC_left, _ = polar(
+        AC.reshape(chi * d, chi), side="right"
+    )
+    U_AC_right, _ = polar(
+        AC.reshape(chi, d * chi), side="left"
+    )
+    U_C, _ = polar(C)
+
+    AL = (U_AC_left @ U_C.conj().T).reshape(chi, d, chi)
+    AR = (U_C.conj().T @ U_AC_right).reshape(chi, d, chi)
+
+    return AL, AR
 
 chi = 6     # mps bond dimension
 D = 6       # mpo bond dimension
@@ -275,8 +285,4 @@ A_L, _, _ = leftCanonical(A)
 A_R, _, _= rightCanonical(A)
 A_C, C = mixedCanonical(A)
 
-H_A_C = hamiltonianHAC(mpoTensor=mpoTensor, mpsLeft=A_L, mpsRight=A_R)
-H_C = hamiltonianHC(mpoTensor=mpoTensor, mpsLeft=A_L, mpsRight=A_R)
 
-A_C_prime, mu_AC = updateAC(H_A_C)
-C_prime, mu_C= updateAC(H_C)
