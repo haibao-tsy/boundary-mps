@@ -4,7 +4,6 @@ from numpy.linalg import norm
 from scipy.linalg import qr, rq, svd
 from scipy.sparse.linalg import LinearOperator, eigs
 
-from vumps import rightCanonical
 def qrpos(a: np.ndarray):
     """Reduced QR with nonnegative real diagonal of R"""
     q, r = qr(a, mode="economic")
@@ -181,7 +180,8 @@ def rightCanonicalQR(A: np.ndarray, tol=1e-14, max_iter=1e5):
     return AR, R, lam
 
 def mixedCanonicalQR(A: np.ndarray, tol=1e-14, max_iter=1e5):
-    """Return a normalized mixed-canonical form of a uniform MPS tensor.
+    """Return a normalized mixed-canonical form of a uniform MPS tensor. Using single-layer algorithm 
+    (QR decomposition with Arnoldi acceleration)
 
     Parameters
     ----------
@@ -250,19 +250,3 @@ def mixedCanonicalQR(A: np.ndarray, tol=1e-14, max_iter=1e5):
     )
 
     return AC, C, AL, AR
-
-chi = 60
-d = 30
-A = np.random.rand(chi, d, chi) + 1.0j * np.random.rand(chi, d, chi)
-
-AC, C, AL, AR = mixedCanonicalQR(A)
-
-test = ncon(
-    [C, AR],
-    [ 
-        [-1, 1],
-        [1, -2, -3]
-    ]
-)
-
-print(np.allclose(test, AC))

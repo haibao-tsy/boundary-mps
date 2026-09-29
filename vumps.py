@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import polar
 from ncon import ncon
 from scipy.sparse.linalg import LinearOperator, eigs
-from canonicalForm import leftCanonicalQR, rightCanonicalQR, mixedCanonicalQR
+from canonicalForm import mixedCanonicalQR
 
 # chi is the dimension of the MPS internal leg
 # d is the dimension of the MPS physical leg
@@ -37,8 +37,9 @@ def leftEnvironment(mpoTensor, mpsLeft, tol=1e-14):
     eigenvalues, eigenvector = eigs(transferMatrix,k=1, which="LM", tol=tol)
 
     lE = eigenvector[:, 0].reshape(chi, D, chi)
+    mpo_lam = eigenvalues[0]
 
-    return lE, eigenvalues[0]
+    return lE, mpo_lam
 
 def rightEnvironment(mpoTensor, mpsRight, tol=1e-14):
     chi = mpsRight.shape[0]
@@ -69,11 +70,11 @@ def rightEnvironment(mpoTensor, mpsRight, tol=1e-14):
     eigenvalues, eigenvector = eigs(transferMatrix,k=1, which="LM", tol=tol)
 
     rE = eigenvector[:, 0].reshape(chi, D, chi)
+    mpo_lam = eigenvalues[0]
+    return rE, mpo_lam
 
-    return rE, eigenvalues[0]
 
-
-def hamiltonianHAC(mpoTensor, leftenv, rightenv):
+def hamiltonianHAC(mpoTensor, leftenv, rightenv, mpo_lam):
     HAC = ncon(
         [leftenv, mpoTensor, rightenv],
         [
@@ -83,7 +84,7 @@ def hamiltonianHAC(mpoTensor, leftenv, rightenv):
         ]
     )
 
-    return HAC 
+    return HAC / mpo_lam
 
 def hamiltonianHC(leftenv, rightenv):
     HC = ncon(
@@ -167,13 +168,16 @@ def recoverMixedCanonical(AC, C):
 
     return AL, AR
 
-chi = 60     # mps bond dimension
-D = 60       # mpo bond dimension
-d = 40       # phyical leg dimension
+chi = 30     # mps bond dimension
+D = 30       # mpo bond dimension
+d = 30       # phyical leg dimension
 
 A = np.random.rand(chi, d, chi)
 mpoTensor = np.random.rand(D, d, d, D)
 
 AC, C, AL, AR = mixedCanonicalQR(A)
 
+_, lam1 = leftEnvironment(mpoTensor=mpoTensor, mpsLeft=AL)
+_, lam2 = rightEnvironment(mpoTensor=mpoTensor, mpsRight=AR)
 
+print(lam1 - lam2)
