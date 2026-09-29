@@ -1,6 +1,6 @@
-ncon2.py
 
 # Python bytecode and caches
+ncon2.py
 __pycache__/
 *.py[cod]
 .pytest_cache/
