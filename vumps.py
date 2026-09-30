@@ -493,11 +493,6 @@ def vumpsMPO(mpoTensor: np.ndarray,
     Convergence requires both the projected fixed-point residual and the
     canonical consistency error to be below tol. This does not certify
     the globally dominant state or remove finite-bond-dimension error.
-
-    Exhausting maxIter currently returns without an exception or a
-    convergence flag. In that case, the environments and mpo_lam precede
-    the last MPS update and must be recomputed before evaluating the final
-    state. A nonpositive maxIter leaves these return values undefined.
     """
     d = mpoTensor.shape[1]
     if A0 is None: 
@@ -529,6 +524,9 @@ def vumpsMPO(mpoTensor: np.ndarray,
 
         if epsilon < tol and error < tol: 
             break
+
+        if iter_count == maxIter: 
+            raise RuntimeError("Failed to converge!")
 
         AC_new, _= updateAC(
                 mpoTensor=mpoTensor, 
