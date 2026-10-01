@@ -1,5 +1,5 @@
 import numpy as np
-from ncon import ncon
+from .ncon import ncon
 from numpy.linalg import norm
 from scipy.linalg import qr, rq, svd
 from scipy.sparse.linalg import LinearOperator, eigs

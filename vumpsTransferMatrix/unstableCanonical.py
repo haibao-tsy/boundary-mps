@@ -20,7 +20,7 @@ or transform it to a diagonal Schmidt gauge.
 
 import numpy as np
 from scipy.linalg import sqrtm, polar
-from ncon import ncon
+from .ncon import ncon
 from scipy.sparse.linalg import LinearOperator, eigs
 
 def leftCanonical(A: np.ndarray, tol=1e-14):

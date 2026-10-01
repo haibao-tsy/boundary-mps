@@ -15,9 +15,9 @@ fixed points. All error measures use absolute Frobenius norms.
 
 import numpy as np
 from scipy.linalg import polar
-from ncon import ncon
+from .ncon import ncon
 from scipy.sparse.linalg import LinearOperator, eigs
-from canonicalForm import mixedCanonicalQR
+from .canonicalForm import mixedCanonicalQR
 
 # chi is the dimension of the MPS internal leg
 # d is the dimension of the MPS physical leg
