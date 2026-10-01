@@ -1,30 +1,12 @@
 import numpy as np
-from ncon import ncon
-from vumps import vumpsMPO
+from vumpsTransferMatrix.ncon import ncon
+from vumpsTransferMatrix.vumps import vumpsMPO
 
-I = np.array(
-    [
-        [1, 0],
-        [0, 1]
-    ],
-    dtype=complex
-)
+I = np.array([[1, 0],[0, 1]],dtype=complex)
 
-X = np.array(
-    [
-        [0, 1],
-        [1, 0]
-    ],
-    dtype=complex
-)
+X = np.array([[0, 1],[1, 0]],dtype=complex)
 
-Z = np.array(
-    [
-        [1, 0],
-        [0, -1]
-    ],
-    dtype=complex
-)
+Z = np.array([[1, 0],[0, -1] ],dtype=complex)
 
 tau = 0.01
 g = 0.8
