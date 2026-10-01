@@ -164,11 +164,6 @@ def normalizedEnvironment(mpoTensor: np.array,
     mpo_lam : complex
         Dominant left-channel eigenvalue. For consistent mixed-canonical
         tensors, the right-channel eigenvalue agrees with it.
-
-    Notes
-    -----
-    The unnormalized overlap must be nonzero. No check for a zero or
-    ill-conditioned overlap is performed.
     """
 
     leftenv, mpo_lam = leftEnvironment(mpoTensor=mpoTensor, mpsLeft=mpsLeft, tol=tol)
@@ -444,9 +439,10 @@ def recoverCanonical(AC, C):
 def vumpsMPO(mpoTensor: np.ndarray, 
             chi: int,
             A0: np.ndarray=None, 
-            tol=1e-14,
-            maxIter=1e5,
-            info: bool=False):
+            tol: float=1e-14,
+            eigs_tol: float=1e-14,
+            maxIter: int=1e5,
+            info: bool=True):
     """Seek a dominant uniform-MPS fixed point of a transfer MPO.
 
     Parameters
@@ -456,20 +452,12 @@ def vumpsMPO(mpoTensor: np.ndarray,
         index, ket physical index, right bond).
     chi : int
         MPS bond dimension for random initialization; must be at least 2
-        for the current sparse eigensolvers.
     A0 : ndarray, shape (chi, d, chi), optional
         Initial injective MPS tensor. If omitted, use uniform random real
-        entries. The tensor is normalized and brought to mixed-canonical
-        form before iteration. A supplied tensor determines the working
-        bond dimension; agreement with chi is not checked.
     tol : float, optional
-        Positive absolute threshold for both convergenceResidual and
-        canonicalError. Also passed to initialization and eigensolvers,
-        whose own tolerance conventions apply.
+        Tolerance for convergence
     maxIter : int, optional
-        Positive maximum number of outer iterations (default 100000).
-        Each iteration checks convergence before updating the tensors.
-        This limit does not bound initialization or inner eigensolver work.
+        Maximum number of outer iterations (default 100000).
 
     Returns
     -------
@@ -488,12 +476,6 @@ def vumpsMPO(mpoTensor: np.ndarray,
         Dominant left-channel eigenvalue from the final environment
         calculation, representing the transfer eigenvalue per site at
         the MPS fixed point.
-
-    Notes
-    -----
-    Convergence requires both the projected fixed-point residual and the
-    canonical consistency error to be below tol. This does not certify
-    the globally dominant state or remove finite-bond-dimension error.
     """
     d = mpoTensor.shape[1]
     if A0 is None: 
@@ -527,20 +509,20 @@ def vumpsMPO(mpoTensor: np.ndarray,
             break
 
         if iter_count == maxIter: 
-            raise RuntimeError("Failed to converge!")
+            raise RuntimeError(f"Failed to converge below tolerance of {tol} after {iter_count} iterations")
 
         AC_new, _= updateAC(
                 mpoTensor=mpoTensor, 
                 leftenv=leftenv, 
                 rightenv=rightenv, 
                 mpo_lam=mpo_lam,
-                tol=tol
+                tol=eigs_tol
                 )
 
         C_new, _ = updateC(
                 leftenv=leftenv, 
                 rightenv=rightenv, 
-                tol=tol)
+                tol=eigs_tol)
 
         AL_new, AR_new = recoverCanonical(AC=AC_new, C=C_new)
         AL = AL_new
@@ -549,20 +531,11 @@ def vumpsMPO(mpoTensor: np.ndarray,
         C = C_new
 
         if info:
-            print(f"iteration: {iter_count}", f"eigenvalue: {mpo_lam}", f"error: {epsilon}")
+            print(
+                f"{iter_count}: ", 
+                f"eigenvalue: {mpo_lam:.3f}",
+                f"residual: {epsilon:.3e}",
+                f"canonical error{error:.3e}")
 
 
     return AC, C, AL, AR, leftenv, rightenv, mpo_lam
-
-if __name__ == '__main__':
-    chi = 10
-    d = 10
-    D = 10
-    mpo = np.random.rand(D, d, d, D)
-
-    AC, C, AL, AR, leftenv, rightenv, mpo_lam = vumpsMPO(
-        mpoTensor=mpo,
-        chi=chi,
-        maxIter=10,
-        info=True
-    )
