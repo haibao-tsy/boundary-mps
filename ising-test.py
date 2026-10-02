@@ -22,7 +22,7 @@ X = np.array([[0, 1],[1, 0]],dtype=complex)
 
 Z = np.array([[1, 0],[0, -1] ],dtype=complex)
 
-g = 1.05  # Ferromagnetic coupling; the quantum critical point is g = 1.
+g = float(input("enter the ZZ coupling g: "))  # Ferromagnetic coupling; the quantum critical point is g = 1.
 tau = 1e-3  # Imaginary-time step used to construct the transfer MPO.
 
 # MPO axes: (left virtual bond, bra spin, ket spin, right virtual bond).
@@ -80,7 +80,10 @@ mz = ncon(
 mz = np.abs( np.real_if_close(mz) )
 
 # Exact spontaneous magnetization for this coupling convention, at g > 1.
-mz_theo = np.power(1 - np.power(g, -2), 1 / 8)
+if g > 1: 
+    mz_theo = np.power(1 - np.power(g, -2), 1 / 8)
+if g < 1:
+    mz_theo = 0
 
 print(f"mz = {mz: .3f}")
 print(f"mz_theoretical = {mz_theo: .3f}")
