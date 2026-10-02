@@ -3,14 +3,19 @@
 Tensor axes throughout this module are:
 
 * MPS tensors: (left bond, physical index, right bond), shape (chi, d, chi).
-* MPO tensors: (left bond, bra physical index, ket physical index, right
-  bond), shape (D, d, d, D).
+* MPO tensors: (left bond, bra physical index, ket physical index, right bond), shape (D, d, d, D).
 * Environments: (bra MPS bond, MPO bond, ket MPS bond), shape (chi, D, chi).
 * Center matrices: (left bond, right bond), shape (chi, chi).
 
-The effective operators target eigenvalues of largest magnitude. The
+Here chi is the MPS bond dimension, d the local physical dimension, and D
+the MPO bond dimension.
+
+The effective operators are applied through tensor contractions without
+forming dense matrices and target eigenvalues of largest magnitude. The
 iteration assumes an injective MPS and well-defined dominant environment
-fixed points. All error measures use absolute Frobenius norms.
+fixed points. Convergence requires both the projected fixed-point residual
+and the canonical consistency error to fall below an absolute Frobenius-norm
+tolerance; eigensolver accuracy is controlled separately.
 """
 
 import numpy as np
@@ -47,6 +52,9 @@ def leftEnvironment(mpoTensor, mpsLeft, tol=1e-14):
 
     Notes
     -----
+    The channel contracts an incoming environment with mpsLeft.conj(),
+    mpoTensor, and mpsLeft, leaving their right bond indices open. No
+    conjugation is applied to the incoming environment.
     The current sparse eigensolver requires chi * D * chi > 2.
     """
     chi = mpsLeft.shape[0]
@@ -104,6 +112,9 @@ def rightEnvironment(mpoTensor, mpsRight, tol=1e-14):
 
     Notes
     -----
+    The channel contracts an incoming environment with mpsRight.conj(),
+    mpoTensor, and mpsRight, leaving their left bond indices open. No
+    conjugation is applied to the incoming environment.
     The current sparse eigensolver requires chi * D * chi > 2.
     """
     chi = mpsRight.shape[0]
@@ -164,6 +175,13 @@ def normalizedEnvironment(mpoTensor: np.array,
     mpo_lam : complex
         Dominant left-channel eigenvalue. For consistent mixed-canonical
         tensors, the right-channel eigenvalue agrees with it.
+
+    Notes
+    -----
+    The overlap through C must be nonzero. Rescaling the left environment
+    fixes the joint overlap, not the individual environment norms or phases.
+    The independently computed right-channel eigenvalue is discarded; its
+    agreement with the left-channel eigenvalue is not checked.
     """
 
     leftenv, mpo_lam = leftEnvironment(mpoTensor=mpoTensor, mpsLeft=mpsLeft, tol=tol)
@@ -208,6 +226,7 @@ def convergenceResidual(mpoTensor, AC, C, AL,
     epsilon : float
         Frobenius norm of B - AL @ K, where B = H_AC(AC) includes division
         by mpo_lam and K = H_C(C). The product acts on the MPS right bond.
+        The norm is absolute and is not divided by the norm of AC.
 
     Notes
     -----
@@ -367,6 +386,9 @@ def updateC(leftenv, rightenv, tol=1e-14):
 
     Notes
     -----
+    H_C contracts C with the two environments over their ket MPS bonds
+    and the shared MPO bond, leaving the bra MPS bonds open. Unlike H_AC
+    in updateAC, this operator is not divided by mpo_lam.
     The current sparse eigensolver requires chi * chi > 2, so chi = 1
     is unsupported by this function.
     """
@@ -420,6 +442,8 @@ def recoverCanonical(AC, C):
     Here AL_s = AL[:, s, :] and AR_s = AR[:, s, :]. Isometry holds up to
     numerical precision, but AC = AL @ C = C @ AR need not hold for
     arbitrary inputs. Use canonicalError to measure that mismatch.
+    The polar unitary of C aligns the gauges of the two reshaped center
+    tensors without explicitly inverting C.
     AC and C are neither modified nor brought to a diagonal Schmidt gauge.
     """
     chi, d = AC.shape[: 2]
@@ -452,12 +476,28 @@ def vumpsMPO(mpoTensor: np.ndarray,
         index, ket physical index, right bond).
     chi : int
         MPS bond dimension for random initialization; must be at least 2
+        for the effective center-matrix eigensolver. If A0 is supplied,
+        its bond dimension is used instead; chi does not resize it.
     A0 : ndarray, shape (chi, d, chi), optional
-        Initial injective MPS tensor. If omitted, use uniform random real
+        Initial injective MPS tensor, with physical dimension matching
+        mpoTensor. If omitted, draw real entries uniformly from [0, 1)
+        using NumPy's global random state. The tensor is converted to a
+        normalized mixed-canonical form before iteration.
     tol : float, optional
-        Tolerance for convergence
+        Absolute convergence threshold (default 1e-14). Both
+        convergenceResidual and canonicalError must be strictly below
+        this value for the iteration to stop successfully.
+    eigs_tol : float, optional
+        Accuracy used for the initial mixedCanonicalQR canonicalization
+        and for all environment and effective-operator eigensolves
+        (default 1e-14). The canonicalization uses an absolute gauge
+        convergence tolerance; the eigensolvers use a relative tolerance.
     maxIter : int, optional
-        Maximum number of outer iterations (default 100000).
+        Positive maximum number of outer convergence checks (default
+    info : bool, optional
+        If True (default), print the iteration number, channel eigenvalue,
+        projected residual, and canonical error after each update. The
+        reported diagnostics describe the state before that update.
 
     Returns
     -------
@@ -476,12 +516,19 @@ def vumpsMPO(mpoTensor: np.ndarray,
         Dominant left-channel eigenvalue from the final environment
         calculation, representing the transfer eigenvalue per site at
         the MPS fixed point.
+
+    Raises
+    ------
+    RuntimeError
+        If either convergence measure is not below tol on the last
+        allowed outer check. Initialization and eigensolver failures
+        also propagate to the caller.
     """
     d = mpoTensor.shape[1]
     if A0 is None: 
         A0 = np.random.rand(chi, d, chi)
 
-    AC, C, AL, AR = mixedCanonicalQR(A=A0, tol=tol)
+    AC, C, AL, AR = mixedCanonicalQR(A=A0, tol=eigs_tol)
 
     iter_count = 0
     while iter_count < maxIter:
@@ -492,7 +539,7 @@ def vumpsMPO(mpoTensor: np.ndarray,
                                     mpsLeft=AL,
                                     mpsRight=AR,
                                     C=C,
-                                    tol=tol)
+                                    tol=eigs_tol)
 
         epsilon = convergenceResidual(
             mpoTensor=mpoTensor,
@@ -535,7 +582,7 @@ def vumpsMPO(mpoTensor: np.ndarray,
                 f"{iter_count}: ", 
                 f"eigenvalue: {mpo_lam:.3f}",
                 f"residual: {epsilon:.3e}",
-                f"canonical error{error:.3e}")
+                f"canonical error: {error:.3e}")
 
 
     return AC, C, AL, AR, leftenv, rightenv, mpo_lam
