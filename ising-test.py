@@ -23,7 +23,7 @@ X = np.array([[0, 1],[1, 0]],dtype=complex)
 Z = np.array([[1, 0],[0, -1] ],dtype=complex)
 
 g = float(input("enter the ZZ coupling g: "))  # Ferromagnetic coupling; the quantum critical point is g = 1.
-tau = 1e-3  # Imaginary-time step used to construct the transfer MPO.
+tau = float(input("enter the imaginary time tau: "))  # Imaginary-time step used to construct the transfer MPO.
 
 # MPO axes: (left virtual bond, bra spin, ket spin, right virtual bond).
 # Its virtual bond dimension is two, matching the I and Z bond channels.
