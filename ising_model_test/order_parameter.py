@@ -56,9 +56,10 @@ mpoTrotterIsing = ncon(
 # AC is the center-site tensor, C the center matrix, and AL/AR the
 # left/right canonical tensors. The remaining outputs are the transfer
 # environments and their dominant eigenvalue.
+chi = 50
 AC, C, AL, AR, leftenv, rightenv, mpo_lam = vumpsMPO(
     mpoTensor=mpoTrotterIsing, 
-    chi=200, 
+    chi=chi, 
     maxIter=50,
     tol=1e-8,
     info=True
