@@ -1,4 +1,4 @@
-from .order_parameter import *
+from order_parameter import *
 from vumpsTransferMatrix.vumps import normalizedEnvironment
 
 
