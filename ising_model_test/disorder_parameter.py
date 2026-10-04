@@ -33,10 +33,15 @@ disorder_para *= ncon(
 )
 
 disorder_para /= np.vdot(AC, AC)
-disorder_para = np.real_if_close(disorder_para)
 if g < 1: disorder_para_theo = np.power(1 - np.power(g, 2), 1 / 4)
 if g > 1: disorder_para_theo = 0
-print(f"disorder parameter = {disorder_para}")
-print(f"theoretical disorder parameter = {disorder_para_theo}")
-print(f"twisted transfer matrix dominant eigenvalue = {twisted_lam}")
 
+length_of_string = int(input("enter the length of string operator: "))
+
+# Allow complex dtype promotion before removing negligible imaginary roundoff.
+disorder_para = np.real_if_close(
+    disorder_para * np.power(twisted_lam, length_of_string)
+)
+print(f"disorder parameter = {disorder_para: .3f}")
+print(f"theoretical disorder parameter = {disorder_para_theo: .3f}")
+print(f"twisted transfer matrix dominant eigenvalue λ = {twisted_lam: .3f}")
