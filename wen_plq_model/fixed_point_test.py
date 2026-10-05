@@ -53,7 +53,9 @@ transferMatrix2 = ncon(
 )
 
 transferMatrix2 = transferMatrix2.reshape(chi**2, chi**4, chi**4, chi**2)
-
+# the configuration of transfer matrix is :
+#                 A B
+#                 B A
 transferMatrix = ncon(
     [transferMatrix1, transferMatrix2],
     [
@@ -63,3 +65,34 @@ transferMatrix = ncon(
 )
 
 transferMatrix = transferMatrix.reshape((chi**4, ) * 4)
+
+AC, C, AL, AR, leftenv, rightenv, lam = vumpsMPO(
+    mpoTensor=transferMatrix,
+    chi = 4
+)
+
+AL = AL.reshape(4, chi, chi, chi, chi, 4)
+
+mpu, _= tensor_equation_solver(
+    [
+        [I, I, X.T, X.T],
+        [Z, X, I.T, X.T],
+        [Y, I, Y.T, Z.T],
+        [Y, Y, I.T, I.T]
+    ]
+)
+
+twistedTransferMatrix = ncon(
+    [AL, mpu, mpu],
+    [
+        [-1, 1, 3, 2, 4, -3],
+        [-2, 2, 1, 6],
+        [6, 4, 3, -4]
+    ]
+)
+
+twistedTransferMatrix = twistedTransferMatrix.reshape(2 * 4, 2 * 4)
+
+eig_vals = np.linalg.eigvals(twistedTransferMatrix)
+eig_vals = eig_vals / eig_vals[0]
+print(np.round(eig_vals, decimals=3))

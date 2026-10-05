@@ -465,7 +465,7 @@ def vumpsMPO(mpoTensor: np.ndarray,
             A0: np.ndarray=None, 
             tol: float=1e-14,
             eigs_tol: float=1e-14,
-            maxIter: int=1e5,
+            maxIter: int=100,
             info: bool=True):
     """Seek a dominant uniform-MPS fixed point of a transfer MPO.
 
