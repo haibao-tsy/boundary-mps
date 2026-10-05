@@ -1,6 +1,6 @@
 import numpy as np
 from tensor_equation_solver import tensor_equation_solver
-from vumpsTransferMatrix.vumps import vumpsMPO, normalizedEnvironment
+from vumpsTransferMatrix.vumps import vumpsMPO
 from vumpsTransferMatrix.ncon import ncon
 
 I = np.array([[1, 0],[0, 1]],dtype=complex)
@@ -66,12 +66,13 @@ transferMatrix = ncon(
 
 transferMatrix = transferMatrix.reshape((chi**4, ) * 4)
 
+chiMPS = 2
 AC, C, AL, AR, leftenv, rightenv, lam = vumpsMPO(
     mpoTensor=transferMatrix,
-    chi = 4
+    chi = chiMPS
 )
 
-AL = AL.reshape(4, chi, chi, chi, chi, 4)
+AL = AL.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
 
 mpu, _= tensor_equation_solver(
     [
@@ -82,6 +83,7 @@ mpu, _= tensor_equation_solver(
     ]
 )
 
+D_MPU = mpu.shape[0]
 twistedTransferMatrix = ncon(
     [AL, mpu, mpu],
     [
@@ -91,7 +93,7 @@ twistedTransferMatrix = ncon(
     ]
 )
 
-twistedTransferMatrix = twistedTransferMatrix.reshape(2 * 4, 2 * 4)
+twistedTransferMatrix = twistedTransferMatrix.reshape(D_MPU * chiMPS, D_MPU * chiMPS)
 
 eig_vals = np.linalg.eigvals(twistedTransferMatrix)
 eig_vals = eig_vals / eig_vals[0]
