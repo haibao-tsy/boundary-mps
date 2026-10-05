@@ -16,7 +16,6 @@ pepsA, _ = tensor_equation_solver(
     [I, Y, Y.T, I.T, X],
     [I, I, X.T, Y.T, Z],
     [Y, X, I.T, I.T, Z],
-    [Y, I, I.T, Y.T, I]
 ]
 )
 
@@ -26,7 +25,6 @@ pepsB, _ = tensor_equation_solver(
     [I, Y, Y.T, I.T, X],
     [I, I, X.T, Y.T, Z],
     [Y, X, I.T, I.T, Z],
-    [X, Y, I.T, I.T, I]
 ]
 )
 
@@ -66,10 +64,14 @@ transferMatrix = ncon(
 
 transferMatrix = transferMatrix.reshape((chi**4, ) * 4)
 
-chiMPS = 20
+transferMatrix = transferMatrix / np.linalg.norm(transferMatrix)
+
+chiMPS = 15
 AC, C, AL, AR, leftenv, rightenv, lam = vumpsMPO(
     mpoTensor=transferMatrix,
-    chi = chiMPS
+    chi = chiMPS,
+    maxIter = 1000,
+    tol=1e-7
 )
 
 AL = AL.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
@@ -97,4 +99,5 @@ twistedTransferMatrix = twistedTransferMatrix.reshape(D_MPU * chiMPS, D_MPU * ch
 
 eig_vals = np.linalg.eigvals(twistedTransferMatrix)
 eig_vals = eig_vals / eig_vals[0]
+eig_vals = eig_vals[np.argsort(np.abs(eig_vals))[::-1]]
 print(np.round(eig_vals, decimals=3))
