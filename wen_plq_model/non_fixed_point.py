@@ -1,5 +1,5 @@
 import numpy as np
-from tensor_equation_solver import tensor_equation_solver
+from tensor_equation_solver import tensor_equation_solver, kron_all
 from vumpsTransferMatrix.vumps import vumpsMPO
 from vumpsTransferMatrix.ncon import ncon
 
@@ -9,7 +9,6 @@ Y = np.array([[0, -1.0j],[1.0j, 0]],dtype=complex)
 Z = np.array([[1, 0],[0, -1] ],dtype=complex)
 
 chi = 2
-
 pepsA, _ = tensor_equation_solver(
 [ 
     [X, I, I.T, X.T, X],
@@ -27,6 +26,23 @@ pepsB, _ = tensor_equation_solver(
     [Y, X, I.T, I.T, Z],
 ]
 )
+
+
+# pepsA, _ = tensor_equation_solver(
+# [ 
+#     [X, Y, Y.T, X.T, I],
+#     [Y, X, X.T, Y.T, I],
+#     [Y, I, I.T, Y.T, I],
+# ]
+# )
+
+# pepsB, _ = tensor_equation_solver(
+# [ 
+#     [X, Y, Y.T, X.T, I],
+#     [Y, X, X.T, Y.T, I],
+#     [X, Y, I.T, I.T, I]
+# ]
+# )
 
 transferMatrix1 = ncon(
     [pepsA, pepsB, pepsB.conj(), pepsA.conj()],
@@ -66,12 +82,13 @@ transferMatrix = transferMatrix.reshape((chi**4, ) * 4)
 
 transferMatrix = transferMatrix / np.linalg.norm(transferMatrix)
 
-chiMPS = 15
+
+chiMPS = 20
 AC, C, AL, AR, leftenv, rightenv, lam = vumpsMPO(
     mpoTensor=transferMatrix,
     chi = chiMPS,
     maxIter = 1000,
-    tol=1e-7
+    tol=1e-6
 )
 
 AL = AL.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
@@ -99,5 +116,4 @@ twistedTransferMatrix = twistedTransferMatrix.reshape(D_MPU * chiMPS, D_MPU * ch
 
 eig_vals = np.linalg.eigvals(twistedTransferMatrix)
 eig_vals = eig_vals / eig_vals[0]
-eig_vals = eig_vals[np.argsort(np.abs(eig_vals))[::-1]]
 print(np.round(eig_vals, decimals=3))
