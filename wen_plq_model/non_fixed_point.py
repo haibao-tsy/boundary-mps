@@ -83,7 +83,7 @@ transferMatrix = transferMatrix.reshape((chi**4, ) * 4)
 transferMatrix = transferMatrix / np.linalg.norm(transferMatrix)
 
 
-chiMPS = 20
+chiMPS = 10
 AC, C, AL, AR, leftenv, rightenv, lam = vumpsMPO(
     mpoTensor=transferMatrix,
     chi = chiMPS,
@@ -115,5 +115,7 @@ twistedTransferMatrix = ncon(
 twistedTransferMatrix = twistedTransferMatrix.reshape(D_MPU * chiMPS, D_MPU * chiMPS)
 
 eig_vals = np.linalg.eigvals(twistedTransferMatrix)
-eig_vals = eig_vals / eig_vals[0]
+eig_vals = eig_vals / eig_vals[np.argmax(np.abs(eig_vals))]
+eig_vals = eig_vals[np.argsort(np.abs(eig_vals))]
+print(np.round(eig_vals, decimals=3))
 print(np.round(eig_vals, decimals=3))
