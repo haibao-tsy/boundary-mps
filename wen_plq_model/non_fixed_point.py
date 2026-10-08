@@ -1,6 +1,6 @@
 import numpy as np
 from tensor_equation_solver import tensor_equation_solver, kron_all
-from vumpsTransferMatrix.vumps import vumpsMPO
+from vumpsTransferMatrix.vumps import vumpsMPO, normalizedEnvironment
 from vumpsTransferMatrix.ncon import ncon
 
 I = np.array([[1, 0],[0, 1]],dtype=complex)
@@ -117,5 +117,4 @@ twistedTransferMatrix = twistedTransferMatrix.reshape(D_MPU * chiMPS, D_MPU * ch
 eig_vals = np.linalg.eigvals(twistedTransferMatrix)
 eig_vals = eig_vals / eig_vals[np.argmax(np.abs(eig_vals))]
 eig_vals = eig_vals[np.argsort(np.abs(eig_vals))]
-print(np.round(eig_vals, decimals=3))
 print(np.round(eig_vals, decimals=3))
