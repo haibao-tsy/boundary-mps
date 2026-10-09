@@ -83,12 +83,12 @@ transferMatrix = transferMatrix.reshape((chi**4, ) * 4)
 transferMatrix = transferMatrix / np.linalg.norm(transferMatrix)
 
 
-chiMPS = 10
+chiMPS = 50
 AC, C, AL, AR, leftenv, rightenv, lam = vumpsMPO(
     mpoTensor=transferMatrix,
     chi = chiMPS,
     maxIter = 1000,
-    tol=1e-6
+    tol=1e-3
 )
 
 AL = AL.reshape(chiMPS, chi, chi, chi, chi, chiMPS)

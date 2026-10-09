@@ -35,8 +35,8 @@ string_order *= ncon(
     ]
 )
 
-print(Ztwisted_lam)
+print(np.real_if_close(Ztwisted_lam))
 string_order /= np.vdot(mpsAC, mpsAC)
 string_order *= Ztwisted_lam ** 1000
 
-print(string_order)
+print(np.real_if_close(string_order))
