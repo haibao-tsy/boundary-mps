@@ -17,6 +17,7 @@ if __name__ == "__main__":
     Y = np.array([[0, -1.0j],[1.0j, 0]],dtype=complex)
     Z = np.array([[1, 0],[0, -1] ],dtype=complex)
 
-    A = sparse_kron_all(X, Y, X, Y, Z, Z)
+    A = sparse_kron_all(X, Y)
+
 
 
