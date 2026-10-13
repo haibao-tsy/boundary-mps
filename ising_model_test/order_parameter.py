@@ -71,3 +71,19 @@ if g < 1:
 
 print(f"order parameter = {mz: .3f}")
 print(f"theoretical order patameter = {mz_theo: .3f}")
+
+from vumpsTransferMatrix.orderParameter import orderParameter
+
+test, _ = orderParameter(
+    leftEnd=Z,
+    stringBulk=I,
+    rightEnd=Z,
+    AC=AC,
+    C=C,
+    AL=AL,
+    AR=AR
+)
+
+test = np.real_if_close(test)
+
+print(f"test = {np.sqrt(test): .3f} ")
