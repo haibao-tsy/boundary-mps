@@ -29,6 +29,7 @@ pepsB, _ = tensor_equation_solver(
 ]
 )
 
+
 transferMatrix1 = ncon(
     [pepsA, pepsB, pepsB.conj(), pepsA.conj()],
     [
@@ -77,24 +78,20 @@ AC_LEFT, C_LEFT, AL_LEFT, AR_LEFT, leftenv_LEFT, rightenv_LEFT, lam = vumpsMPO(
 )
 
 AL_LEFT = AL_LEFT.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
+AL_LEFT = AL_LEFT.transpose(0, 3, 4, 1, 2, 5)
 
 AC_RIGHT, C_RIGHT, AL_RIGHT, AR_RIGHT, leftenv_RIGHT, rightenv_RIGHT, _ = vumpsMPO(
-    mpoTensor=transferMatrixPEPS.T,
+    mpoTensor=transferMatrixPEPS.conj().transpose(0, 2, 1, 3),
     chi = chiMPS,
     maxIter = 1000,
     tol=1e-6
 )
 
 AL_RIGHT = AL_RIGHT.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
-mpu, _= tensor_equation_solver(
-    [
-        [I, I, X.T, X.T],
-        [Z, X, I.T, X.T],
-        [Y, I, Y.T, Z.T],
-        [Y, Y, I.T, I.T]
-    ]
-)
+AL_RIGHT = AL_RIGHT.conj()
 
+mpu = np.array([[I, X], [1j * Y, Z]]).transpose(0, 2, 3, 1)
+mpu = mpu / np.sqrt(2)
 D_MPU = mpu.shape[0]
 
 transferMatrixMPS = ncon(
