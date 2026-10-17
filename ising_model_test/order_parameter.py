@@ -87,3 +87,15 @@ test, _ = orderParameter(
 test = np.real_if_close(test)
 
 print(f"test = {np.sqrt(test): .3f} ")
+
+from vumpsTransferMatrix.pepsExpectationValue import pepsExpectationValue
+
+test = pepsExpectationValue(
+    mpsLEFT=AL,
+    mpsRIGHT=AL,
+    leftEnd=Z,
+    stringBulk=I,
+    rightEnd=Z
+)
+
+print(np.round(np.sqrt(test), decimals = 3))
