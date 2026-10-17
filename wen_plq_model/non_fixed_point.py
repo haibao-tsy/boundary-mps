@@ -29,6 +29,17 @@ pepsB, _ = tensor_equation_solver(
 ]
 )
 
+perturbation, _ = tensor_equation_solver(
+    [
+        [X, Y, Y.T, X.T, I],
+        [Y, X, X.T, Y.T, I],
+    ]
+)
+
+perturbation = perturbation / 8.0
+
+pepsA = pepsA + perturbation
+pepsB = pepsB + perturbation
 
 transferMatrix1 = ncon(
     [pepsA, pepsB, pepsB.conj(), pepsA.conj()],
@@ -119,10 +130,10 @@ twistedTransferMatrixMPS = twistedTransferMatrixMPS.reshape(D_MPU * chiMPS * chi
 
 lam_twisted = np.linalg.eigvals(twistedTransferMatrixMPS)
 lam_twisted_dom = lam_twisted[np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max())]
-print("twisted dominant eigenvalue = ", np.round( lam_twisted_dom, decimals=3))
+print("twisted dominant eigenvalue = ", lam_twisted_dom)
 
 lam_untwisted = np.linalg.eigvals(transferMatrixMPS)
 lam_untwisted_dom = lam_untwisted[np.isclose(np.abs(lam_untwisted), np.abs(lam_untwisted).max())]
-print("untwisted dominant eigenvalue = ", np.round( lam_untwisted_dom, decimals=3 ))
+print("untwisted dominant eigenvalue = ", lam_untwisted_dom)
 
-print("ratio = ", np.round(lam_twisted_dom[0] / lam_untwisted_dom[0], decimals=5))
+print("ratio = ", lam_twisted_dom[0] / lam_untwisted_dom[0])
