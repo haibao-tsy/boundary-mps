@@ -141,12 +141,12 @@ twistedTransferMatrixMPS = twistedTransferMatrixMPS.reshape(D_MPU * chiMPS * chi
 
 
 lam_twisted = np.linalg.eigvals(twistedTransferMatrixMPS)
-lam_twisted_dom = lam_twisted[np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max())]
+lam_twisted_dom = lam_twisted[np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max(), atol=1e-2)]
 print("twisted dominant eigenvalue = ", np.round( lam_twisted, decimals=3 )[0:3])
 print("twisted dominant eigenvalue norm = ", np.round( np.abs( lam_twisted ), decimals=3 )[0:3])
 
 lam_untwisted = np.linalg.eigvals(transferMatrixMPS)
-lam_untwisted_dom = lam_untwisted[np.isclose(np.abs(lam_untwisted), np.abs(lam_untwisted).max())]
+lam_untwisted_dom = lam_untwisted[np.isclose(np.abs(lam_untwisted), np.abs(lam_untwisted).max(), atol=1e-2)]
 print("untwisted dominant eigenvalue = ", np.round( lam_untwisted, decimals=3 )[0:3])
 print("untwisted dominant eigenvalue norm = ", np.round( np.abs( lam_untwisted ), decimals=3 )[0:3])
 
