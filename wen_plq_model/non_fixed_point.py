@@ -9,6 +9,9 @@ Y = np.array([[0, -1.0j],[1.0j, 0]],dtype=complex)
 Z = np.array([[1, 0],[0, -1] ],dtype=complex)
 
 chi = 2
+tol=1e-5
+chiMPS = 10
+
 pepsA, _ = tensor_equation_solver(
 [ 
     [X, I, I.T, X.T, X],
@@ -29,17 +32,27 @@ pepsB, _ = tensor_equation_solver(
 ]
 )
 
-perturbation, _ = tensor_equation_solver(
+
+perturbationA, _ = tensor_equation_solver(
     [
         [X, Y, Y.T, X.T, I],
         [Y, X, X.T, Y.T, I],
+        [Y, I, I.T, Y.T, I]
+    ]
+)
+perturbationB, _ = tensor_equation_solver(
+    [
+        [X, Y, Y.T, X.T, I],
+        [Y, X, X.T, Y.T, I],
+        [X, Y, I.T, I.T, I]
     ]
 )
 
-perturbation = perturbation / 8.0
+perturbationA = perturbationA / 3.0
+perturbationB = perturbationB / 3.0
 
-pepsA = pepsA + perturbation
-pepsB = pepsB + perturbation
+pepsA = pepsA + perturbationA
+pepsB = pepsB + perturbationB
 
 transferMatrix1 = ncon(
     [pepsA, pepsB, pepsB.conj(), pepsA.conj()],
@@ -80,12 +93,11 @@ transferMatrixPEPS = transferMatrixPEPS.reshape((chi**4, ) * 4)
 transferMatrixPEPS = transferMatrixPEPS / np.linalg.norm(transferMatrixPEPS)
 
 
-chiMPS = 10
 AC_LEFT, C_LEFT, AL_LEFT, AR_LEFT, leftenv_LEFT, rightenv_LEFT, lam = vumpsMPO(
     mpoTensor=transferMatrixPEPS,
     chi = chiMPS,
     maxIter = 10000,
-    tol=1e-6
+    tol=tol
 )
 
 MPDO_LEFT = AL_LEFT.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
@@ -95,7 +107,7 @@ AC_RIGHT, C_RIGHT, AL_RIGHT, AR_RIGHT, leftenv_RIGHT, rightenv_RIGHT, _ = vumpsM
     mpoTensor=transferMatrixPEPS.conj().transpose(0, 2, 1, 3),
     chi = chiMPS,
     maxIter = 1000,
-    tol=1e-6
+    tol=tol
 )
 
 MPDO_RIGHT = AL_RIGHT.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
@@ -130,10 +142,12 @@ twistedTransferMatrixMPS = twistedTransferMatrixMPS.reshape(D_MPU * chiMPS * chi
 
 lam_twisted = np.linalg.eigvals(twistedTransferMatrixMPS)
 lam_twisted_dom = lam_twisted[np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max())]
-print("twisted dominant eigenvalue = ", lam_twisted_dom)
+print("twisted dominant eigenvalue = ", np.round( lam_twisted, decimals=3 )[0:3])
+print("twisted dominant eigenvalue norm = ", np.round( np.abs( lam_twisted ), decimals=3 )[0:3])
 
 lam_untwisted = np.linalg.eigvals(transferMatrixMPS)
 lam_untwisted_dom = lam_untwisted[np.isclose(np.abs(lam_untwisted), np.abs(lam_untwisted).max())]
-print("untwisted dominant eigenvalue = ", lam_untwisted_dom)
+print("untwisted dominant eigenvalue = ", np.round( lam_untwisted, decimals=3 )[0:3])
+print("untwisted dominant eigenvalue norm = ", np.round( np.abs( lam_untwisted ), decimals=3 )[0:3])
 
-print("ratio = ", lam_twisted_dom[0] / lam_untwisted_dom[0])
+print("ratio = ", np.round( lam_twisted_dom[0] / lam_untwisted_dom[0], decimals=3 ))
