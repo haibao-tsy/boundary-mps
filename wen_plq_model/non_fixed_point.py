@@ -48,8 +48,8 @@ perturbationB, _ = tensor_equation_solver(
     ]
 )
 
-perturbationA = perturbationA / 3.0
-perturbationB = perturbationB / 3.0
+perturbationA = perturbationA / 5.0
+perturbationB = perturbationB / 5.0
 
 pepsA = pepsA + perturbationA
 pepsB = pepsB + perturbationB
@@ -141,7 +141,9 @@ twistedTransferMatrixMPS = twistedTransferMatrixMPS.reshape(D_MPU * chiMPS * chi
 
 
 lam_twisted = np.linalg.eigvals(twistedTransferMatrixMPS)
-lam_twisted_dom = lam_twisted[np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max(), atol=1e-2)]
+lam_twisted = lam_twisted[np.argsort(np.abs(lam_twisted))][::-1]
+# difference larger than 0.1 are not consider close
+lam_twisted_dom = lam_twisted[np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max(), atol=1e-1, rtol=0)]
 print("twisted dominant eigenvalue = ", np.round( lam_twisted, decimals=3 )[0:3])
 print("twisted dominant eigenvalue norm = ", np.round( np.abs( lam_twisted ), decimals=3 )[0:3])
 
