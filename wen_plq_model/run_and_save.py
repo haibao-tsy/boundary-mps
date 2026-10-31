@@ -20,8 +20,9 @@ results = {
     "⟨m'm'|m'm'⟩": np.round( mbarmbarCorrelator, decimals=3),
     "⟨e'e'|e'e'⟩": np.round( ebarebarCorrelator, decimals=3),
 }
+sub_folder_name = "1st|no_exgg|no_pert"
 
-output_path = Path(__file__).resolve().parent / "2st|exgg|pert" / "2st|exgg|pert#1.csv"
+output_path = Path(__file__).resolve().parent / sub_folder_name / f"{sub_folder_name}.csv"
 output_path.parent.mkdir(parents=True, exist_ok=True)
 
 with open(output_path, "a", newline="", encoding="utf-8") as file:
@@ -32,7 +33,7 @@ with open(output_path, "a", newline="", encoding="utf-8") as file:
     writer.writerow(results)
 
 npz_filename = f"peps_{datetime.now():%Y%m%d_%H%M%S_%f}.npz"
-npz_output_path = Path(__file__).resolve().parent / "2st|exgg|pert" / npz_filename
+npz_output_path = Path(__file__).resolve().parent / sub_folder_name / npz_filename
 npz_output_path.parent.mkdir(parents=True, exist_ok=True)
 
 np.savez(
@@ -40,3 +41,9 @@ np.savez(
     pepsA=pepsA,
     pepsB=pepsB
 )
+
+info_output_path = Path(__file__).resolve().parent / sub_folder_name / "info.text"
+
+with open(info_output_path, "w", encoding="utf-8") as file:
+    file.write(f"MPS bond dimension: {chiMPS} \n")
+    file.write(f"VUMPS tolerance: {tol}")

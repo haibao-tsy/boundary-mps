@@ -18,7 +18,7 @@ pepsA, _ = tensor_equation_solver(
     [I, Y, Y.T, I.T, X],
     [I, I, X.T, Y.T, Z],
     [Y, X, I.T, I.T, Z],
-    [Y, I, I.T, Y.T, I]
+    # [Y, I, I.T, Y.T, I]
 ]
 )
 
@@ -28,7 +28,7 @@ pepsB, _ = tensor_equation_solver(
     [I, Y, Y.T, I.T, X],
     [I, I, X.T, Y.T, Z],
     [Y, X, I.T, I.T, Z],
-    [X, Y, I.T, I.T, I]
+    # [X, Y, I.T, I.T, I]
 ]
 )
 
@@ -37,22 +37,24 @@ perturbationA, _ = tensor_equation_solver(
     [
         [X, Y, Y.T, X.T, I],
         [Y, X, X.T, Y.T, I],
-        [Y, I, I.T, Y.T, I]
+        # [Y, I, I.T, Y.T, I]
     ]
 )
 perturbationB, _ = tensor_equation_solver(
     [
         [X, Y, Y.T, X.T, I],
         [Y, X, X.T, Y.T, I],
-        [X, Y, I.T, I.T, I]
+        # [X, Y, I.T, I.T, I]
     ]
 )
 
-perturbationA = perturbationA / 5.0
-perturbationB = perturbationB / 5.0
+perturbationA = perturbationA / 8.0
+perturbationB = perturbationB / 8.0
 
-pepsA = pepsA + perturbationA
-pepsB = pepsB + perturbationB
+# pepsA = pepsA + perturbationA
+# pepsB = pepsB + perturbationB
+
+pepsB = pepsA
 
 transferMatrix1 = ncon(
     [pepsA, pepsB, pepsB.conj(), pepsA.conj()],
