@@ -107,12 +107,66 @@ twistedTransferMatrix = twistedTransferMatrix.reshape(chi**6, chi**4, chi**4, ch
 twistedTransferMatrix = twistedTransferMatrix / np.linalg.norm(twistedTransferMatrix)
 
 
-AC_LEFT, C_LEFT, AL_LEFT, AR_LEFT, leftenv_LEFT, rightenv_LEFT, lam = vumpsMPO(
+twistedAC_LEFT, twistedC_LEFT, twistedAL_LEFT, twistedAR_LEFT, twistedleftenv_LEFT, twistedrightenv_LEFT, twistedlam = vumpsMPO(
     mpoTensor=twistedTransferMatrix,
     chi = chiMPS,
     maxIter = 10000,
     tol=tol
 )
 
-MPDO_LEFT = AL_LEFT.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
-MPDO_LEFT = MPDO_LEFT.transpose(0, 3, 4, 1, 2, 5)
+
+# NOTE: untwisted
+transferMatrix1 = ncon(
+    [pepsA, pepsB, pepsB.conj(), pepsA.conj()],
+    [
+        [-6, 3, -10, -12, 4],
+        [-5, -2, -9, 3, 1],
+        [-3, -1, -7, 2, 1],
+        [-4, 2, -8, -11, 4]
+    ]
+)
+
+transferMatrix1 = transferMatrix1.reshape(chi**2, chi**4, chi**4, chi**2)
+
+transferMatrix2 = ncon(
+    [pepsB, pepsA, pepsA.conj(), pepsB.conj()],
+    [
+        [-6, 3, -10, -12, 4],
+        [-5, -2, -9, 3, 1],
+        [-3, -1, -7, 2, 1],
+        [-4, 2, -8, -11, 4]
+    ]
+)
+
+transferMatrix2 = transferMatrix2.reshape(chi**2, chi**4, chi**4, chi**2)
+# the configuration of transfer matrix is :
+#                 A B
+#                 B A
+transferMatrixPEPS = ncon(
+    [transferMatrix1, transferMatrix2],
+    [
+        [-1, -3, 1, -5],
+        [-2, 1, -4, -6]
+    ]
+)
+
+transferMatrixPEPS = transferMatrixPEPS.reshape((chi**4, ) * 4)
+
+transferMatrixPEPS = transferMatrixPEPS / np.linalg.norm(transferMatrixPEPS)
+
+
+chiMPS = 10
+AC_LEFT, C_LEFT, AL_LEFT, AR_LEFT, leftenv_LEFT, rightenv_LEFT, lam = vumpsMPO(
+    mpoTensor=transferMatrixPEPS,
+    chi = chiMPS,
+    maxIter = 10000,
+    tol=1e-6
+)
+
+AC_RIGHT, C_RIGHT, AL_RIGHT, AR_RIGHT, leftenv_RIGHT, rightenv_RIGHT, _ = vumpsMPO(
+    mpoTensor=transferMatrixPEPS.conj().transpose(0, 2, 1, 3),
+    chi = chiMPS,
+    maxIter = 1000,
+    tol=1e-6
+)
+
