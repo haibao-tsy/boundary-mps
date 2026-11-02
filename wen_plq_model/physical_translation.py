@@ -3,36 +3,37 @@ from tensor_equation_solver import tensor_equation_solver
 from vumpsTransferMatrix.vumps import vumpsMPO
 from vumpsTransferMatrix.ncon import ncon
 
-I = np.array([[1, 0],[0, 1]],dtype=complex)
-X = np.array([[0, 1],[1, 0]],dtype=complex)
-Y = np.array([[0, -1.0j],[1.0j, 0]],dtype=complex)
-Z = np.array([[1, 0],[0, -1] ],dtype=complex)
+I = np.array([[1, 0], [0, 1]], dtype=complex)
+X = np.array([[0, 1], [1, 0]], dtype=complex)
+Y = np.array([[0, -1.0j], [1.0j, 0]], dtype=complex)
+Z = np.array([[1, 0], [0, -1]], dtype=complex)
 
 chi = 2
-tol=1e-6
+tol = 1e-8
 chiMPS = 10
 if_perturbation = False
 
 pepsA, _ = tensor_equation_solver(
-[ 
-    [X, I, I.T, X.T, X],
-    [I, Y, Y.T, I.T, X],
-    [I, I, X.T, Y.T, Z],
-    [Y, X, I.T, I.T, Z],
-    [Y, I, I.T, Y.T, I]
-]
+    [
+        [X, I, I.T, X.T, X],
+        [I, Y, Y.T, I.T, X],
+        [I, I, X.T, Y.T, Z],
+        [Y, X, I.T, I.T, Z],
+        [Y, I, I.T, Y.T, I],
+    ]
 )
 
 pepsB, _ = tensor_equation_solver(
-[ 
-    [X, I, I.T, X.T, X],
-    [I, Y, Y.T, I.T, X],
-    [I, I, X.T, Y.T, Z],
-    [Y, X, I.T, I.T, Z],
-    [X, Y, I.T, I.T, I]
-]
+    [
+        [X, I, I.T, X.T, X],
+        [I, Y, Y.T, I.T, X],
+        [I, I, X.T, Y.T, Z],
+        [Y, X, I.T, I.T, Z],
+        [X, Y, I.T, I.T, I],
+    ]
 )
 
+pepsB = pepsA
 if if_perturbation:
 
     perturbationA, _ = tensor_equation_solver(
@@ -56,7 +57,7 @@ if if_perturbation:
     pepsA = pepsA + perturbationA
     pepsB = pepsB + perturbationB
 
-translationMPO = np.einsum('ij, kl->ijkl', I, I)
+translationMPO = ncon([I, I], [[-1, -2], [-3, -4]])
 
 #   A
 #   B
@@ -66,10 +67,10 @@ twistedTransferMatrix1 = ncon(
         [-7, 5, -11, -14, 7],
         [-6, -3, -10, 5, 2],
         [-2, 1, 2, 4],
-        [4, 6, 7 , -13],
+        [4, 6, 7, -13],
         [-4, -1, -8, 3, 1],
-        [-5, 3, -9, -12, 6]
-    ]
+        [-5, 3, -9, -12, 6],
+    ],
 )
 
 twistedTransferMatrix1 = twistedTransferMatrix1.reshape(chi**3, chi**4, chi**4, chi**3)
@@ -82,10 +83,10 @@ twistedTransferMatrix2 = ncon(
         [-7, 5, -11, -14, 7],
         [-6, -3, -10, 5, 2],
         [-2, 1, 2, 4],
-        [4, 6, 7 , -13],
+        [4, 6, 7, -13],
         [-4, -1, -8, 3, 1],
-        [-5, 3, -9, -12, 6]
-    ]
+        [-5, 3, -9, -12, 6],
+    ],
 )
 
 twistedTransferMatrix2 = twistedTransferMatrix2.reshape(chi**3, chi**4, chi**4, chi**3)
@@ -95,11 +96,7 @@ twistedTransferMatrix2 = twistedTransferMatrix2.reshape(chi**3, chi**4, chi**4, 
 #                 A B
 #                 B A
 twistedTransferMatrix = ncon(
-    [twistedTransferMatrix1, twistedTransferMatrix2],
-    [
-        [-1, -3, 1, -5],
-        [-2, 1, -4, -6]
-    ]
+    [twistedTransferMatrix1, twistedTransferMatrix2], [[-1, -3, 1, -5], [-2, 1, -4, -6]]
 )
 
 twistedTransferMatrix = twistedTransferMatrix.reshape(chi**6, chi**4, chi**4, chi**6)
@@ -107,35 +104,28 @@ twistedTransferMatrix = twistedTransferMatrix.reshape(chi**6, chi**4, chi**4, ch
 twistedTransferMatrix = twistedTransferMatrix / np.linalg.norm(twistedTransferMatrix)
 
 
-twistedAC_LEFT, twistedC_LEFT, twistedAL_LEFT, twistedAR_LEFT, twistedleftenv_LEFT, twistedrightenv_LEFT, twistedlam = vumpsMPO(
-    mpoTensor=twistedTransferMatrix,
-    chi = chiMPS,
-    maxIter = 10000,
-    tol=tol
-)
+(
+    twistedAC_LEFT,
+    twistedC_LEFT,
+    twistedAL_LEFT,
+    twistedAR_LEFT,
+    twistedleftenv_LEFT,
+    twistedrightenv_LEFT,
+    twistedlam,
+) = vumpsMPO(mpoTensor=twistedTransferMatrix, chi=chiMPS, maxIter=10000, tol=tol)
 
 
 # NOTE: untwisted
 transferMatrix1 = ncon(
     [pepsA, pepsB, pepsB.conj(), pepsA.conj()],
-    [
-        [-6, 3, -10, -12, 4],
-        [-5, -2, -9, 3, 1],
-        [-3, -1, -7, 2, 1],
-        [-4, 2, -8, -11, 4]
-    ]
+    [[-6, 3, -10, -12, 4], [-5, -2, -9, 3, 1], [-3, -1, -7, 2, 1], [-4, 2, -8, -11, 4]],
 )
 
 transferMatrix1 = transferMatrix1.reshape(chi**2, chi**4, chi**4, chi**2)
 
 transferMatrix2 = ncon(
     [pepsB, pepsA, pepsA.conj(), pepsB.conj()],
-    [
-        [-6, 3, -10, -12, 4],
-        [-5, -2, -9, 3, 1],
-        [-3, -1, -7, 2, 1],
-        [-4, 2, -8, -11, 4]
-    ]
+    [[-6, 3, -10, -12, 4], [-5, -2, -9, 3, 1], [-3, -1, -7, 2, 1], [-4, 2, -8, -11, 4]],
 )
 
 transferMatrix2 = transferMatrix2.reshape(chi**2, chi**4, chi**4, chi**2)
@@ -143,30 +133,46 @@ transferMatrix2 = transferMatrix2.reshape(chi**2, chi**4, chi**4, chi**2)
 #                 A B
 #                 B A
 transferMatrixPEPS = ncon(
-    [transferMatrix1, transferMatrix2],
-    [
-        [-1, -3, 1, -5],
-        [-2, 1, -4, -6]
-    ]
+    [transferMatrix1, transferMatrix2], [[-1, -3, 1, -5], [-2, 1, -4, -6]]
 )
 
-transferMatrixPEPS = transferMatrixPEPS.reshape((chi**4, ) * 4)
+transferMatrixPEPS = transferMatrixPEPS.reshape((chi**4,) * 4)
 
 transferMatrixPEPS = transferMatrixPEPS / np.linalg.norm(transferMatrixPEPS)
 
-
-chiMPS = 10
 AC_LEFT, C_LEFT, AL_LEFT, AR_LEFT, leftenv_LEFT, rightenv_LEFT, lam = vumpsMPO(
-    mpoTensor=transferMatrixPEPS,
-    chi = chiMPS,
-    maxIter = 10000,
-    tol=1e-6
+    mpoTensor=transferMatrixPEPS, chi=chiMPS, maxIter=10000, tol=1e-6
 )
 
 AC_RIGHT, C_RIGHT, AL_RIGHT, AR_RIGHT, leftenv_RIGHT, rightenv_RIGHT, _ = vumpsMPO(
     mpoTensor=transferMatrixPEPS.conj().transpose(0, 2, 1, 3),
-    chi = chiMPS,
-    maxIter = 1000,
-    tol=1e-6
+    chi=chiMPS,
+    maxIter=1000,
+    tol=1e-6,
 )
 
+twistedOverlap = ncon([twistedAL_LEFT, AL_RIGHT.conj()], [[-2, 1, -4], [-1, 1, -3]])
+
+twistedOverlap = twistedOverlap.reshape(chiMPS**2, chiMPS**2)
+
+lam_twisted = np.linalg.eigvals(twistedOverlap)
+lam_twisted_dom = lam_twisted[
+    np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max(), atol=1e-5)
+]
+
+print(lam_twisted_dom)
+if len(lam_twisted_dom) != 1:
+    print(np.round(lam_twisted_dom[0] / lam_twisted_dom[1], decimals=3))
+
+untwistedOverlap = ncon([AL_LEFT, AL_RIGHT.conj()], [[-2, 1, -4], [-1, 1, -3]])
+
+untwistedOverlap = untwistedOverlap.reshape(chiMPS**2, chiMPS**2)
+
+lam_untwisted = np.linalg.eigvals(untwistedOverlap)
+lam_untwisted_dom = lam_untwisted[
+    np.isclose(np.abs(lam_untwisted), np.abs(lam_untwisted).max(), atol=1e-5)
+]
+
+print(lam_untwisted_dom)
+
+print(np.round(np.abs(lam_twisted_dom[0] / lam_untwisted_dom[0]), decimals=3))
