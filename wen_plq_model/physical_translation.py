@@ -33,7 +33,6 @@ pepsB, _ = tensor_equation_solver(
     ]
 )
 
-pepsB = pepsA
 if if_perturbation:
 
     perturbationA, _ = tensor_equation_solver(
@@ -156,8 +155,9 @@ twistedOverlap = ncon([twistedAL_LEFT, AL_RIGHT.conj()], [[-2, 1, -4], [-1, 1, -
 twistedOverlap = twistedOverlap.reshape(chiMPS**2, chiMPS**2)
 
 lam_twisted = np.linalg.eigvals(twistedOverlap)
+lam_twisted = lam_twisted[np.argsort(np.abs(lam_twisted))][::-1]
 lam_twisted_dom = lam_twisted[
-    np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max(), atol=1e-5)
+    np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max(), atol=1e-1, rtol=0)
 ]
 
 print(lam_twisted_dom)
@@ -169,6 +169,7 @@ untwistedOverlap = ncon([AL_LEFT, AL_RIGHT.conj()], [[-2, 1, -4], [-1, 1, -3]])
 untwistedOverlap = untwistedOverlap.reshape(chiMPS**2, chiMPS**2)
 
 lam_untwisted = np.linalg.eigvals(untwistedOverlap)
+lam_untwisted = lam_untwisted[np.argsort(np.abs(lam_untwisted))][::-1]
 lam_untwisted_dom = lam_untwisted[
     np.isclose(np.abs(lam_untwisted), np.abs(lam_untwisted).max(), atol=1e-5)
 ]
@@ -176,3 +177,42 @@ lam_untwisted_dom = lam_untwisted[
 print(lam_untwisted_dom)
 
 print(np.round(np.abs(lam_twisted_dom[0] / lam_untwisted_dom[0]), decimals=3))
+
+
+MPDO_LEFT = AL_LEFT.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
+MPDO_LEFT = MPDO_LEFT.transpose(0, 3, 4, 1, 2, 5)
+MPDO_RIGHT = AL_RIGHT.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
+MPDO_RIGHT = MPDO_RIGHT.conj()
+
+mpu = np.array([[I, X], [1j * Y, Z]]).transpose(0, 2, 3, 1)
+mpu = mpu / np.sqrt(2)
+D_MPU = mpu.shape[0]
+
+transferMatrixMPS = ncon(
+    [MPDO_LEFT, MPDO_RIGHT], [[-1, 1, 3, 2, 4, -3], [-2, 2, 4, 1, 3, -4]]
+)
+
+transferMatrixMPS = transferMatrixMPS.reshape(chiMPS * chiMPS, chiMPS * chiMPS)
+
+twistedTransferMatrixMPS = ncon(
+    [MPDO_RIGHT, mpu, mpu, MPDO_LEFT],
+    [[-1, 1, 5, 2, 6, -4], [-2, 2, 3, 4], [4, 6, 7, -5], [-3, 3, 7, 1, 5, -6]],
+)
+
+twistedTransferMatrixMPS = twistedTransferMatrixMPS.reshape(
+    D_MPU * chiMPS * chiMPS, D_MPU * chiMPS * chiMPS
+)
+
+mpu_lam_twisted = np.linalg.eigvals(twistedTransferMatrixMPS)
+mpu_lam_twisted = mpu_lam_twisted[np.argsort(np.abs(mpu_lam_twisted))][::-1]
+# difference larger than 0.1 are not consider close
+mpu_lam_twisted_dom = mpu_lam_twisted[
+    np.isclose(
+        np.abs(mpu_lam_twisted), np.abs(mpu_lam_twisted).max(), atol=1e-1, rtol=0
+    )
+]
+
+mpu_lam_untwisted = np.linalg.eigvals(transferMatrixMPS)
+mpu_lam_untwisted_dom = mpu_lam_untwisted[
+    np.isclose(np.abs(mpu_lam_untwisted), np.abs(mpu_lam_untwisted).max(), atol=1e-2)
+]
