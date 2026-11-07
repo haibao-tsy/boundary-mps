@@ -46,14 +46,12 @@ disorder_para = disorder_para * twisted_lam ** length_of_string
 print(f"disorder parameter = {disorder_para.real: .3f}")
 print(f"theoretical disorder parameter = {disorder_para_theo: .3f}")
 
-disorder_test, _= orderParameter(
+disorder_test = pepsExpectationValue(
     leftEnd=I,
     stringBulk=X,
     rightEnd=I,
-    AC=AC,
-    C=C,
-    AL=AL,
-    AR=AR
+    mpsLEFT=AL,
+    mpsRIGHT=AL
 )
 
 print(f"test = {disorder_test.real: .3f}")
