@@ -34,8 +34,16 @@ results = {
     "⟨GS|m'm'⟩": np.round(mbarCorrelator, decimals=3),
     "⟨m'm'|m'm'⟩": np.round(mbarmbarCorrelator, decimals=3),
     "⟨e'e'|e'e'⟩": np.round(ebarebarCorrelator, decimals=3),
+    "⟨GS|e₁e₁⟩": np.round(e1Correlator, decimals=3),
+    "⟨e₁e₁|e₁e₁⟩": np.round(e1e1Correlator, decimals=3),
+    "⟨GS|e₂e₂⟩": np.round(e2Correlator, decimals=3),
+    "⟨e₂e₂|e₂e₂⟩": np.round(e2e2Correlator, decimals=3),
 }
-sub_folder_name = "2st_no_exgg_no_pert"
+print("\n")
+for key, item in results.items():
+    print(f"{key}={item}")
+
+sub_folder_name = "new_anyon_fxpt"
 
 output_path = (
     Path(__file__).resolve().parent / sub_folder_name / f"{sub_folder_name}.csv"

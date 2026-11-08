@@ -9,7 +9,7 @@ Y = np.array([[0, -1.0j], [1.0j, 0]], dtype=complex)
 Z = np.array([[1, 0], [0, -1]], dtype=complex)
 
 chi = 2
-tol = 1e-8
+tol = 1e-6
 chiMPS = 10
 if_perturbation = False
 
@@ -19,6 +19,9 @@ pepsA, _ = tensor_equation_solver(
         [I, Y, Y.T, I.T, X],
         [I, I, X.T, Y.T, Z],
         [Y, X, I.T, I.T, Z],
+        # [Z, Y, I.T, Y.T, I],
+        # [X, Y, Y.T, X.T, I],
+        # [Y, X, X.T, Y.T, I],
         [Y, I, I.T, Y.T, I],
     ]
 )
@@ -29,6 +32,8 @@ pepsB, _ = tensor_equation_solver(
         [I, Y, Y.T, I.T, X],
         [I, I, X.T, Y.T, Z],
         [Y, X, I.T, I.T, Z],
+        # [X, Y, Y.T, X.T, I],
+        # [Y, X, X.T, Y.T, I],
         [X, Y, I.T, I.T, I],
     ]
 )
@@ -36,22 +41,14 @@ pepsB, _ = tensor_equation_solver(
 if if_perturbation:
 
     perturbationA, _ = tensor_equation_solver(
-        [
-            [X, Y, Y.T, X.T, I],
-            [Y, X, X.T, Y.T, I],
-            # [Y, I, I.T, Y.T, I]
-        ]
+        [[X, Y, Y.T, X.T, I], [Y, X, X.T, Y.T, I], [Y, I, I.T, Y.T, I]]
     )
     perturbationB, _ = tensor_equation_solver(
-        [
-            [X, Y, Y.T, X.T, I],
-            [Y, X, X.T, Y.T, I],
-            # [X, Y, I.T, I.T, I]
-        ]
+        [[X, Y, Y.T, X.T, I], [Y, X, X.T, Y.T, I], [X, Y, I.T, I.T, I]]
     )
 
-    perturbationA = perturbationA / 8.0
-    perturbationB = perturbationB / 8.0
+    perturbationA = perturbationA / 10.0
+    perturbationB = perturbationB / 10.0
 
     pepsA = pepsA + perturbationA
     pepsB = pepsB + perturbationB
@@ -102,7 +99,7 @@ twistedTransferMatrix = twistedTransferMatrix.reshape(chi**6, chi**4, chi**4, ch
 
 twistedTransferMatrix = twistedTransferMatrix / np.linalg.norm(twistedTransferMatrix)
 
-
+print("Calculating translation twisted boundary MPS: \n")
 (
     twistedAC_LEFT,
     twistedC_LEFT,
@@ -139,10 +136,12 @@ transferMatrixPEPS = transferMatrixPEPS.reshape((chi**4,) * 4)
 
 transferMatrixPEPS = transferMatrixPEPS / np.linalg.norm(transferMatrixPEPS)
 
+print("\nCalculating untwisted left boundary MPS: \n")
 AC_LEFT, C_LEFT, AL_LEFT, AR_LEFT, leftenv_LEFT, rightenv_LEFT, lam = vumpsMPO(
     mpoTensor=transferMatrixPEPS, chi=chiMPS, maxIter=10000, tol=1e-6
 )
 
+print("\nCalculating untwisted right boundary MPS: \n")
 AC_RIGHT, C_RIGHT, AL_RIGHT, AR_RIGHT, leftenv_RIGHT, rightenv_RIGHT, _ = vumpsMPO(
     mpoTensor=transferMatrixPEPS.conj().transpose(0, 2, 1, 3),
     chi=chiMPS,
@@ -160,10 +159,6 @@ lam_twisted_dom = lam_twisted[
     np.isclose(np.abs(lam_twisted), np.abs(lam_twisted).max(), atol=1e-1, rtol=0)
 ]
 
-print(lam_twisted_dom)
-if len(lam_twisted_dom) != 1:
-    print(np.round(lam_twisted_dom[0] / lam_twisted_dom[1], decimals=3))
-
 untwistedOverlap = ncon([AL_LEFT, AL_RIGHT.conj()], [[-2, 1, -4], [-1, 1, -3]])
 
 untwistedOverlap = untwistedOverlap.reshape(chiMPS**2, chiMPS**2)
@@ -173,11 +168,6 @@ lam_untwisted = lam_untwisted[np.argsort(np.abs(lam_untwisted))][::-1]
 lam_untwisted_dom = lam_untwisted[
     np.isclose(np.abs(lam_untwisted), np.abs(lam_untwisted).max(), atol=1e-5)
 ]
-
-print(lam_untwisted_dom)
-
-print(np.round(np.abs(lam_twisted_dom[0] / lam_untwisted_dom[0]), decimals=3))
-
 
 MPDO_LEFT = AL_LEFT.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
 MPDO_LEFT = MPDO_LEFT.transpose(0, 3, 4, 1, 2, 5)

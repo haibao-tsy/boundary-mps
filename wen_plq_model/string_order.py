@@ -10,7 +10,6 @@ ffCorrelator = pepsExpectationValue(
     rightEnd=kron_all(Z, Y, Z, Y),
 )
 
-print(f"ffCorrelator = {ffCorrelator:.3e}")
 
 fbarfbarCorrelator = pepsExpectationValue(
     mpsLEFT=AL_LEFT,
@@ -20,7 +19,6 @@ fbarfbarCorrelator = pepsExpectationValue(
     rightEnd=kron_all(Z, X, Z, X),
 )
 
-print(f"fbarfbarCorrelator = {fbarfbarCorrelator:.3e}")
 
 eeCorrelator = pepsExpectationValue(
     mpsLEFT=AL_LEFT,
@@ -30,7 +28,6 @@ eeCorrelator = pepsExpectationValue(
     rightEnd=kron_all(Y, I, Y, I),
 )
 
-print(f"eeCorrelator = {eeCorrelator:.3e}")
 
 eCorrelator = pepsExpectationValue(
     mpsLEFT=AL_LEFT,
@@ -40,7 +37,6 @@ eCorrelator = pepsExpectationValue(
     rightEnd=kron_all(Y, I, I, I),
 )
 
-print(f"eCorrelator = {eCorrelator:.3e}")
 
 mmCorrelator = pepsExpectationValue(
     mpsLEFT=AL_LEFT,
@@ -50,7 +46,6 @@ mmCorrelator = pepsExpectationValue(
     rightEnd=kron_all(X, Y, X, Y),
 )
 
-print(f"mmCorrelator = {mmCorrelator:.3e}")
 mCorrelator = pepsExpectationValue(
     mpsLEFT=AL_LEFT,
     mpsRIGHT=AL_RIGHT,
@@ -59,7 +54,6 @@ mCorrelator = pepsExpectationValue(
     rightEnd=kron_all(X, Y, I, I),
 )
 
-print(f"mCorrelator = {mCorrelator:.3e}")
 
 ebarebarCorrelator = pepsExpectationValue(
     mpsLEFT=AL_LEFT,
@@ -69,7 +63,6 @@ ebarebarCorrelator = pepsExpectationValue(
     rightEnd=kron_all(X, I, X, I),
 )
 
-print(f"ebarebarCorrelator = {ebarebarCorrelator:.3e}")
 
 ebarCorrelator = pepsExpectationValue(
     mpsLEFT=AL_LEFT,
@@ -79,7 +72,6 @@ ebarCorrelator = pepsExpectationValue(
     rightEnd=kron_all(X, I, I, I),
 )
 
-print(f"ebarCorrelator = {ebarCorrelator:.3e}")
 
 mbarmbarCorrelator = pepsExpectationValue(
     mpsLEFT=AL_LEFT,
@@ -89,7 +81,6 @@ mbarmbarCorrelator = pepsExpectationValue(
     rightEnd=kron_all(Y, X, Y, X),
 )
 
-print(f"mbarmbarCorrelator = {mbarmbarCorrelator:.3e}")
 
 mbarCorrelator = pepsExpectationValue(
     mpsLEFT=AL_LEFT,
@@ -99,4 +90,34 @@ mbarCorrelator = pepsExpectationValue(
     rightEnd=kron_all(Y, X, I, I),
 )
 
-print(f"mbarCorrelator = {mbarCorrelator:.3e}")
+e1Correlator = pepsExpectationValue(
+    mpsLEFT=AL_LEFT,
+    mpsRIGHT=AL_RIGHT,
+    leftEnd=kron_all(I, I, I, Y),
+    stringBulk=kron_all(I, I, I, I),
+    rightEnd=kron_all(I, I, X, I),
+)
+
+e1e1Correlator = pepsExpectationValue(
+    mpsLEFT=AL_LEFT,
+    mpsRIGHT=AL_RIGHT,
+    leftEnd=kron_all(I, Y, I, Y),
+    stringBulk=kron_all(I, I, I, I),
+    rightEnd=kron_all(X, I, X, I),
+)
+
+e2Correlator = pepsExpectationValue(
+    mpsLEFT=AL_LEFT,
+    mpsRIGHT=AL_RIGHT,
+    leftEnd=kron_all(I, X, I, I),
+    stringBulk=kron_all(I, I, I, I),
+    rightEnd=kron_all(Y, I, I, I),
+)
+
+e2e2Correlator = pepsExpectationValue(
+    mpsLEFT=AL_LEFT,
+    mpsRIGHT=AL_RIGHT,
+    leftEnd=kron_all(I, X, I, X),
+    stringBulk=kron_all(I, I, I, I),
+    rightEnd=kron_all(Y, I, Y, I),
+)
