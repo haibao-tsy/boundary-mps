@@ -28,6 +28,7 @@ from .canonicalForm import mixedCanonicalQR
 # d is the dimension of the MPS physical leg
 # D is the dimension of the MPO internal leg
 
+
 def leftEnvironment(mpoTensor, mpsLeft, tol=1e-14):
     """Find the dominant environment of the left-to-right MPO channel.
 
@@ -65,12 +66,7 @@ def leftEnvironment(mpoTensor, mpsLeft, tol=1e-14):
 
         result = ncon(
             [mpsLeft.conj(), mpoTensor, mpsLeft, v],
-            [
-                [1, 4, -1],
-                [2, 4, 5, -2],
-                [3, 5, -3],
-                [1, 2, 3]
-            ]
+            [[1, 4, -1], [2, 4, 5, -2], [3, 5, -3], [1, 2, 3]],
         )
 
         return result.ravel()
@@ -81,12 +77,13 @@ def leftEnvironment(mpoTensor, mpsLeft, tol=1e-14):
         dtype=np.complex128,
     )
 
-    eigenvalues, eigenvector = eigs(transferMatrix,k=1, which="LM", tol=tol)
+    eigenvalues, eigenvector = eigs(transferMatrix, k=1, which="LM", tol=tol)
 
     lE = eigenvector[:, 0].reshape(chi, D, chi)
     mpo_lam = eigenvalues[0]
 
     return lE, mpo_lam
+
 
 def rightEnvironment(mpoTensor, mpsRight, tol=1e-14):
     """Find the dominant environment of the right-to-left MPO channel.
@@ -125,12 +122,7 @@ def rightEnvironment(mpoTensor, mpsRight, tol=1e-14):
 
         result = ncon(
             [mpsRight.conj(), mpoTensor, mpsRight, v],
-            [
-                [-1, 4, 1],
-                [-2, 4, 5, 2],
-                [-3, 5, 3],
-                [1, 2, 3]
-            ]
+            [[-1, 4, 1], [-2, 4, 5, 2], [-3, 5, 3], [1, 2, 3]],
         )
 
         return result.ravel()
@@ -141,17 +133,16 @@ def rightEnvironment(mpoTensor, mpsRight, tol=1e-14):
         dtype=np.complex128,
     )
 
-    eigenvalues, eigenvector = eigs(transferMatrix,k=1, which="LM", tol=tol)
+    eigenvalues, eigenvector = eigs(transferMatrix, k=1, which="LM", tol=tol)
 
     rE = eigenvector[:, 0].reshape(chi, D, chi)
     mpo_lam = eigenvalues[0]
     return rE, mpo_lam
 
-def normalizedEnvironment(mpoTensor: np.array,
-                          mpsLeft: np.array,
-                          mpsRight: np.array,
-                          C: np.array,
-                          tol=1e-14):
+
+def normalizedEnvironment(
+    mpoTensor: np.array, mpsLeft: np.array, mpsRight: np.array, C: np.array, tol=1e-14
+):
     """Compute environments and normalize their contraction through C.
 
     Parameters
@@ -188,21 +179,15 @@ def normalizedEnvironment(mpoTensor: np.array,
     rightenv, _ = rightEnvironment(mpoTensor=mpoTensor, mpsRight=mpsRight, tol=tol)
 
     overlap = ncon(
-        [leftenv, C.conj(), C, rightenv],
-        [
-            [1, 2, 3],
-            [1, 4],
-            [3, 5],
-            [4, 2, 5]
-        ]
+        [leftenv, C.conj(), C, rightenv], [[1, 2, 3], [1, 4], [3, 5], [4, 2, 5]]
     )
 
     leftenv /= overlap
 
     return leftenv, rightenv, mpo_lam
 
-def convergenceResidual(mpoTensor, AC, C, AL,
-                        leftenv, rightenv, mpo_lam):
+
+def convergenceResidual(mpoTensor, AC, C, AL, leftenv, rightenv, mpo_lam):
     """Measure the left-gauge projected fixed-point residual.
 
     Parameters
@@ -237,15 +222,18 @@ def convergenceResidual(mpoTensor, AC, C, AL,
     within the chosen bond dimension, not the full MPO eigenstate error.
     """
 
-    B = ncon(
-        [mpoTensor, leftenv, rightenv, AC],
-        [
-            [4, -2, 2, 5],
-            [-1, 4, 1],
-            [-3, 5, 3],
-            [1, 2, 3],
-        ],
-    ) / mpo_lam
+    B = (
+        ncon(
+            [mpoTensor, leftenv, rightenv, AC],
+            [
+                [4, -2, 2, 5],
+                [-1, 4, 1],
+                [-3, 5, 3],
+                [1, 2, 3],
+            ],
+        )
+        / mpo_lam
+    )
 
     K = ncon(
         [leftenv, rightenv, C],
@@ -263,11 +251,8 @@ def convergenceResidual(mpoTensor, AC, C, AL,
 
     return np.linalg.norm(B - ALK)
 
-def canonicalError(
-        AC: np.ndarray,
-        C: np.ndarray,
-        AL: np.ndarray,
-        AR: np.ndarray):
+
+def canonicalError(AC: np.ndarray, C: np.ndarray, AL: np.ndarray, AR: np.ndarray):
     """Measure the mismatch between the two center factorizations.
 
     Parameters
@@ -291,18 +276,14 @@ def canonicalError(
     the isometry of AL or AR, or the normalization of AC and C.
     """
 
-    error1 = np.linalg.norm(
-        AC - ncon([AL, C],[[-1, -2, 1], [1, -3]])
-    )
-    
-    error2 = np.linalg.norm(
-        AC - ncon([C, AR],[[-1, 1], [1, -2, -3]])
-    )
+    error1 = np.linalg.norm(AC - ncon([AL, C], [[-1, -2, 1], [1, -3]]))
+
+    error2 = np.linalg.norm(AC - ncon([C, AR], [[-1, 1], [1, -2, -3]]))
 
     return max(error1, error2)
 
 
-def updateAC(mpoTensor, leftenv, rightenv, mpo_lam, tol=1e-14):
+def updateAC(mpoTensor, leftenv, rightenv, mpo_lam, tol=1e-14, AC0=None):
     """Solve the effective center-tensor eigenproblem.
 
     Parameters
@@ -335,36 +316,29 @@ def updateAC(mpoTensor, leftenv, rightenv, mpo_lam, tol=1e-14):
     """
     chi = leftenv.shape[0]
     d = mpoTensor.shape[1]
+
     def matvec(v):
         v = v.reshape(chi, d, chi)
         result = ncon(
             [mpoTensor, leftenv, rightenv, v],
-            [
-                [4, -2, 2, 5],  
-                [-1, 4, 1],     
-                [-3, 5, 3],     
-                [1, 2, 3]      
-            ]
+            [[4, -2, 2, 5], [-1, 4, 1], [-3, 5, 3], [1, 2, 3]],
         )
         result /= mpo_lam
         return result.ravel()
 
     HAC = LinearOperator(
-        shape=(chi * d * chi, chi * d * chi),
-        matvec=matvec,
-        dtype=np.complex128
+        shape=(chi * d * chi, chi * d * chi), matvec=matvec, dtype=np.complex128
     )
 
-    eigenvalues, eigenvector = eigs(
-        A=HAC,
-        k=1,
-        which="LM",
-        tol=tol
-    )
+    if AC0 is None:
+        eigenvalues, eigenvector = eigs(A=HAC, k=1, which="LM", tol=tol)
+    else:
+        eigenvalues, eigenvector = eigs(A=HAC, k=1, which="LM", tol=tol, v0=AC0.ravel())
 
     return eigenvector[:, 0].reshape(chi, d, chi), eigenvalues[0]
-    
-def updateC(leftenv, rightenv, tol=1e-14):
+
+
+def updateC(leftenv, rightenv, tol=1e-14, C0=None):
     """Solve the effective center-matrix eigenproblem.
 
     Parameters
@@ -393,32 +367,23 @@ def updateC(leftenv, rightenv, tol=1e-14):
     is unsupported by this function.
     """
     chi = leftenv.shape[0]
+
     def matvec(v):
         v = v.reshape(chi, chi)
-        result = ncon(
-            [leftenv, rightenv, v],
-            [
-                [-1, 3, 1],
-                [-2, 3, 2],
-                [1, 2]
-            ]
-        )
+        result = ncon([leftenv, rightenv, v], [[-1, 3, 1], [-2, 3, 2], [1, 2]])
         return result.ravel()
 
     HC = LinearOperator(
-        shape=(chi * chi, chi * chi),
-        matvec=matvec,
-        dtype=np.complex128
+        shape=(chi * chi, chi * chi), matvec=matvec, dtype=np.complex128
     )
 
-    eigenvalues, eigenvector = eigs(
-        A=HC,
-        k=1,
-        which="LM",
-        tol=tol
-    )
+    if C0 is None:
+        eigenvalues, eigenvector = eigs(A=HC, k=1, which="LM", tol=tol)
+    else:
+        eigenvalues, eigenvector = eigs(A=HC, k=1, which="LM", tol=tol, v0=C0)
 
     return eigenvector[:, 0].reshape(chi, chi), eigenvalues[0]
+
 
 def recoverCanonical(AC, C):
     """Recover left and right isometries using polar decompositions.
@@ -446,13 +411,9 @@ def recoverCanonical(AC, C):
     tensors without explicitly inverting C.
     AC and C are neither modified nor brought to a diagonal Schmidt gauge.
     """
-    chi, d = AC.shape[: 2]
-    U_AC_left, _ = polar(
-        AC.reshape(chi * d, chi), side="right"
-    )
-    U_AC_right, _ = polar(
-        AC.reshape(chi, d * chi), side="left"
-    )
+    chi, d = AC.shape[:2]
+    U_AC_left, _ = polar(AC.reshape(chi * d, chi), side="right")
+    U_AC_right, _ = polar(AC.reshape(chi, d * chi), side="left")
     U_C, _ = polar(C)
 
     AL = (U_AC_left @ U_C.conj().T).reshape(chi, d, chi)
@@ -460,13 +421,16 @@ def recoverCanonical(AC, C):
 
     return AL, AR
 
-def vumpsMPO(mpoTensor: np.ndarray, 
-            chi: int,
-            A0: np.ndarray=None, 
-            tol: float=1e-14,
-            eigs_tol: float=1e-14,
-            maxIter: int=100,
-            info: bool=True):
+
+def vumpsMPO(
+    mpoTensor: np.ndarray,
+    chi: int,
+    A0: np.ndarray = None,
+    tol: float = 1e-14,
+    eigs_tol: float = 1e-14,
+    maxIter: int = 100,
+    info: bool = True,
+):
     """Seek a dominant uniform-MPS fixed point of a transfer MPO.
 
     Parameters
@@ -525,7 +489,7 @@ def vumpsMPO(mpoTensor: np.ndarray,
         also propagate to the caller.
     """
     d = mpoTensor.shape[1]
-    if A0 is None: 
+    if A0 is None:
         A0 = np.random.rand(chi, d, chi)
 
     AC, C, AL, AR = mixedCanonicalQR(A=A0, tol=eigs_tol)
@@ -535,11 +499,8 @@ def vumpsMPO(mpoTensor: np.ndarray,
         iter_count += 1
 
         leftenv, rightenv, mpo_lam = normalizedEnvironment(
-                                    mpoTensor=mpoTensor,
-                                    mpsLeft=AL,
-                                    mpsRight=AR,
-                                    C=C,
-                                    tol=eigs_tol)
+            mpoTensor=mpoTensor, mpsLeft=AL, mpsRight=AR, C=C, tol=eigs_tol
+        )
 
         epsilon = convergenceResidual(
             mpoTensor=mpoTensor,
@@ -548,28 +509,29 @@ def vumpsMPO(mpoTensor: np.ndarray,
             AL=AL,
             leftenv=leftenv,
             rightenv=rightenv,
-            mpo_lam=mpo_lam)
+            mpo_lam=mpo_lam,
+        )
 
         error = canonicalError(AC=AC, C=C, AL=AL, AR=AR)
 
-        if epsilon < tol and error < tol: 
+        if epsilon < tol and error < tol:
             break
 
-        if iter_count == maxIter: 
-            raise RuntimeError(f"Failed to converge below tolerance of {tol} after {iter_count} iterations")
+        if iter_count == maxIter:
+            raise RuntimeError(
+                f"Failed to converge below tolerance of {tol} after {iter_count} iterations"
+            )
 
-        AC_new, _= updateAC(
-                mpoTensor=mpoTensor, 
-                leftenv=leftenv, 
-                rightenv=rightenv, 
-                mpo_lam=mpo_lam,
-                tol=eigs_tol
-                )
+        AC_new, _ = updateAC(
+            mpoTensor=mpoTensor,
+            leftenv=leftenv,
+            rightenv=rightenv,
+            mpo_lam=mpo_lam,
+            tol=eigs_tol,
+            AC0=AC,
+        )
 
-        C_new, _ = updateC(
-                leftenv=leftenv, 
-                rightenv=rightenv, 
-                tol=eigs_tol)
+        C_new, _ = updateC(leftenv=leftenv, rightenv=rightenv, tol=eigs_tol, C0=C)
 
         AL_new, AR_new = recoverCanonical(AC=AC_new, C=C_new)
         AL = AL_new
@@ -579,10 +541,10 @@ def vumpsMPO(mpoTensor: np.ndarray,
 
         if info:
             print(
-                f"{iter_count}: ", 
+                f"{iter_count}: ",
                 f"eigenvalue: {mpo_lam:.3f}",
                 f"residual: {epsilon:.3e}",
-                f"canonical error: {error:.3e}")
-
+                f"canonical error: {error:.3e}",
+            )
 
     return AC, C, AL, AR, leftenv, rightenv, mpo_lam

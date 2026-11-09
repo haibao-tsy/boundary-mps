@@ -9,7 +9,7 @@ Y = np.array([[0, -1.0j], [1.0j, 0]], dtype=complex)
 Z = np.array([[1, 0], [0, -1]], dtype=complex)
 
 chi = 2
-tol = 1e-6
+tol = 1e-8
 chiMPS = 10
 if_perturbation = False
 
@@ -19,24 +19,22 @@ pepsA, _ = tensor_equation_solver(
         [I, Y, Y.T, I.T, X],
         [I, I, X.T, Y.T, Z],
         [Y, X, I.T, I.T, Z],
-        # [Z, Y, I.T, Y.T, I],
-        # [X, Y, Y.T, X.T, I],
-        # [Y, X, X.T, Y.T, I],
-        [Y, I, I.T, Y.T, I],
+        [I, X, Z.T, X.T, I],
+        # [I, X, X.T, I.T, I],
     ]
 )
+pepsB = pepsA
+# pepsB, _ = tensor_equation_solver(
+#     [
+#         [X, I, I.T, X.T, X],
+#         [I, Y, Y.T, I.T, X],
+#         [I, I, X.T, Y.T, Z],
+#         [Y, X, I.T, I.T, Z],
+#         # [I, X, Z.T, X.T, I],
+#         # [X, Y, I.T, I.T, I],
+#     ]
+# )
 
-pepsB, _ = tensor_equation_solver(
-    [
-        [X, I, I.T, X.T, X],
-        [I, Y, Y.T, I.T, X],
-        [I, I, X.T, Y.T, Z],
-        [Y, X, I.T, I.T, Z],
-        # [X, Y, Y.T, X.T, I],
-        # [Y, X, X.T, Y.T, I],
-        [X, Y, I.T, I.T, I],
-    ]
-)
 
 if if_perturbation:
 

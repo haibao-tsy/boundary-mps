@@ -39,33 +39,36 @@ results = {
     "⟨GS|e₂e₂⟩": np.round(e2Correlator, decimals=3),
     "⟨e₂e₂|e₂e₂⟩": np.round(e2e2Correlator, decimals=3),
 }
-print("\n")
+print("\n Correlator computations")
 for key, item in results.items():
     print(f"{key}={item}")
 
-sub_folder_name = "new_anyon_fxpt"
+if_save = True
 
-output_path = (
-    Path(__file__).resolve().parent / sub_folder_name / f"{sub_folder_name}.csv"
-)
-output_path.parent.mkdir(parents=True, exist_ok=True)
+if if_save:
+    sub_folder_name = "Ygauge(2)"
 
-with open(output_path, "a", newline="", encoding="utf-8") as file:
-    writer = csv.DictWriter(file, fieldnames=list(results.keys()))
+    output_path = (
+        Path(__file__).resolve().parent / sub_folder_name / f"{sub_folder_name}.csv"
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if file.tell() == 0:
-        writer.writeheader()
+    with open(output_path, "a", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=list(results.keys()))
 
-    writer.writerow(results)
+        if file.tell() == 0:
+            writer.writeheader()
 
-npz_filename = f"peps_{datetime.now():%Y%m%d_%H%M%S_%f}.npz"
-npz_output_path = Path(__file__).resolve().parent / sub_folder_name / npz_filename
-npz_output_path.parent.mkdir(parents=True, exist_ok=True)
+        writer.writerow(results)
 
-np.savez(npz_output_path, pepsA=pepsA, pepsB=pepsB)
+    npz_filename = f"peps_{datetime.now():%Y%m%d_%H%M%S_%f}.npz"
+    npz_output_path = Path(__file__).resolve().parent / sub_folder_name / npz_filename
+    npz_output_path.parent.mkdir(parents=True, exist_ok=True)
 
-info_output_path = Path(__file__).resolve().parent / sub_folder_name / "info.text"
+    np.savez(npz_output_path, pepsA=pepsA, pepsB=pepsB)
 
-with open(info_output_path, "w", encoding="utf-8") as file:
-    file.write(f"MPS bond dimension: {chiMPS} \n")
-    file.write(f"VUMPS tolerance: {tol}")
+    info_output_path = Path(__file__).resolve().parent / sub_folder_name / "info.text"
+
+    with open(info_output_path, "w", encoding="utf-8") as file:
+        file.write(f"MPS bond dimension: {chiMPS} \n")
+        file.write(f"VUMPS tolerance: {tol}")

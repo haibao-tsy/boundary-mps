@@ -3,6 +3,7 @@
 import numpy as np
 from .ncon import ncon
 from scipy.sparse.linalg import eigs, LinearOperator
+import warnings
 
 
 def pepsExpectationValue(
@@ -135,8 +136,10 @@ def pepsExpectationValue(
     # Divide out the overlap growth per site before raising to string_length.
     twisted_lam /= untwisted_lam
     if np.abs(twisted_lam) > 1.0 + 1e-10:
-        raise RuntimeWarning(
-            f"Twisted bulk transfer matrix eigenvalue {np.abs(twisted_lam): .3f} > 1 !"
+        warnings.warn(
+            f"Twisted bulk transfer matrix eigenvalue {np.abs(twisted_lam):.3f} > 1!",
+            RuntimeWarning,
+            stacklevel=2,
         )
     # Join the untwisted exterior to the twisted bulk at the left endpoint.
     exp_val = ncon(
