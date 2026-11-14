@@ -9,10 +9,12 @@ Y = np.array([[0, -1.0j], [1.0j, 0]], dtype=complex)
 Z = np.array([[1, 0], [0, -1]], dtype=complex)
 
 chi = 2
-tol = 1e-8
+tol = 1e-6
 chiMPS = 10
 if_perturbation = False
 
+print(f"VUMPS tolerance = {tol}")
+print(f"boundary MPS bond dimenstion = {chiMPS}\n")
 pepsA, _ = tensor_equation_solver(
     [
         [X, I, I.T, X.T, X],
@@ -20,18 +22,22 @@ pepsA, _ = tensor_equation_solver(
         [I, I, X.T, Y.T, Z],
         [Y, X, I.T, I.T, Z],
         [I, X, Z.T, X.T, I],
-        # [I, X, X.T, I.T, I],
+        # [I, X, X.T, I.T, I],  # e' = e1m2 condensation
+        # [X, Y, I.T, I.T, I],  # m' = m1 condensation
     ]
 )
-pepsB = pepsA
+
+pepsB = pepsA.copy()
+
 # pepsB, _ = tensor_equation_solver(
 #     [
 #         [X, I, I.T, X.T, X],
 #         [I, Y, Y.T, I.T, X],
 #         [I, I, X.T, Y.T, Z],
 #         [Y, X, I.T, I.T, Z],
-#         # [I, X, Z.T, X.T, I],
-#         # [X, Y, I.T, I.T, I],
+#         [I, X, Z.T, X.T, I],
+#         # [X, Y, I.T, I.T, I],  # e' condensation
+#         # [I, X, X.T, I.T, I],  # m' = m1 condensation
 #     ]
 # )
 
@@ -172,8 +178,9 @@ MPDO_LEFT = MPDO_LEFT.transpose(0, 3, 4, 1, 2, 5)
 MPDO_RIGHT = AL_RIGHT.reshape(chiMPS, chi, chi, chi, chi, chiMPS)
 MPDO_RIGHT = MPDO_RIGHT.conj()
 
-mpu = np.array([[I, X], [1j * Y, Z]]).transpose(0, 2, 3, 1)
-mpu = mpu / np.sqrt(2)
+# mpu = np.array([[I, X], [1j * Y, Z]]).transpose(0, 2, 3, 1)
+# mpu = mpu / np.sqrt(2)
+mpu = translationMPO.copy()
 D_MPU = mpu.shape[0]
 
 transferMatrixMPS = ncon(

@@ -163,4 +163,6 @@ def pepsExpectationValue(
     # Retain only the dominant twisted mode across the bulk string.
     exp_val *= twisted_lam**string_length
 
+    if return_untwisted_lam:
+        return exp_val, untwisted_lam
     return exp_val
